@@ -127,81 +127,88 @@ func createProduct(w http.ResponseWriter, r *http.Request) {
 
 func getProductById(w http.ResponseWriter, r *http.Request) {
 	// parse id dari url
-	// url: /api/produk/{id}
+	// url: /api/products/{id}
 
 	// 	### Penjelasan Detail
 	// **URL Path Parsing** - Ini yang paling tricky:
 
-	// 1. **URL:** `/api/produk/123`
-	// 2. **TrimPrefix:** Hilangkan `/api/produk/` → dapat `"123"`
+	// 1. **URL:** `/api/products/123`
+	// 2. **TrimPrefix:** Hilangkan `/api/products/` → dapat `"123"`
 	// 3. **Atoi:** Convert `"123"` string → `123` integer
 
-	idStr := strings.TrimPrefix(r.URL.Path, "/api/produk/")
+	idStr := strings.TrimPrefix(r.URL.Path, "/api/products/")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid Product ID", http.StatusBadRequest)
+		errorResponse(w, "Invalid Product ID", http.StatusBadRequest)
+		return
 	}
 
 	// cari produk dengan id yang sesuai
-	for _, p := range produk {
+	for _, p := range products {
 		if p.ID == id {
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(p)
+			successResponse(w, "Product retrieved successfully", p, http.StatusOK)
 			return
 		}
 	}
 
 	// jika produk tidak ditemukan
-	json.NewEncoder(w).Encode(map[string]string{"status": "error", "message": "Product not found"})
+	errorResponse(w, "Product not found", http.StatusNotFound)
 }
 
 func updateProduct(w http.ResponseWriter, r *http.Request) {
 	// get id dari request
-	idStr := strings.TrimPrefix(r.URL.Path, "/api/produk/")
+	idStr := strings.TrimPrefix(r.URL.Path, "/api/products/")
 
 	// convert id to integer
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid Product ID", http.StatusBadRequest)
+		errorResponse(w, "Invalid Product ID", http.StatusBadRequest)
 		return
 	}
 
-	// get data dari request
+	// get data dari request body
 	var updateProduct Product
 	err = json.NewDecoder(r.Body).Decode(&updateProduct)
 	if err != nil {
-		http.Error(w, "Invalid request", http.StatusBadRequest)
+		errorResponse(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+
+	// validasi field product (setelah decode)
+	errorMessage, isValid := validateProduct(updateProduct)
+	if !isValid {
+		errorResponse(w, errorMessage, http.StatusBadRequest)
+		return
 	}
 
 	// loop produk, cari id yang sesuai, ganti data sesuai dengan data dari request
-	for i := range produk {
-		if produk[i].ID == id {
+	for i := range products {
+		if products[i].ID == id {
 			updateProduct.ID = id
-			produk[i] = updateProduct
+			products[i] = updateProduct
 
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(updateProduct)
+			successResponse(w, "Product updated successfully", updateProduct, http.StatusOK)
 			return
 		}
 	}
 
 	// jika produk tidak ditemukan
-	json.NewEncoder(w).Encode(map[string]string{"status": "error", "message": "Product not found"})
+	errorResponse(w, "Product not found", http.StatusNotFound)
 }
 
 func deleteProduct(w http.ResponseWriter, r *http.Request) {
 	// get id
-	idStr := strings.TrimPrefix(r.URL.Path, "/api/produk/")
+	idStr := strings.TrimPrefix(r.URL.Path, "/api/products/")
 
 	// ganti id int
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid Product ID", http.StatusBadRequest)
+		errorResponse(w, "Invalid Product ID", http.StatusBadRequest)
 		return
 	}
 
 	// loop produk cari ID, dapet index yang mau dihapus
-	for i, p := range produk {
+	for i, p := range products {
 		if p.ID == id {
 			// bikin slice baru dengan data sebelum dan sesudah index
 			products = append(products[:i], products[i+1:]...)
