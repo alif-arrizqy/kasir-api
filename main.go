@@ -10,10 +10,10 @@ import (
 
 // blueprint untuk produk
 type Produk struct {
-	ID    int    `json:"id" validate:"required"`
-	Nama  string `json:"nama" validate:"required"`
-	Harga int    `json:"harga" validate:"required"`
-	Stok  int    `json:"stok" validate:"required"`
+	ID    int    `json:"id"`
+	Nama  string `json:"nama"`
+	Harga int    `json:"harga"`
+	Stok  int    `json:"stok"`
 }
 
 // in-memory storage
@@ -90,20 +90,20 @@ func updateProduk(w http.ResponseWriter, r *http.Request) {
 func deleteProduk(w http.ResponseWriter, r *http.Request) {
 	// get id
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/produk/")
-	
+
 	// ganti id int
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		http.Error(w, "Invalid Produk ID", http.StatusBadRequest)
 		return
 	}
-	
+
 	// loop produk cari ID, dapet index yang mau dihapus
 	for i, p := range produk {
 		if p.ID == id {
 			// bikin slice baru dengan data sebelum dan sesudah index
 			produk = append(produk[:i], produk[i+1:]...)
-			
+
 			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(map[string]string{
 				"message": "sukses delete",
