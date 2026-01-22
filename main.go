@@ -9,7 +9,7 @@ import (
 )
 
 // blueprint untuk produk
-type Produk struct {
+type Product struct {
 	ID    int    `json:"id"`
 	Nama  string `json:"nama"`
 	Harga int    `json:"harga"`
@@ -17,13 +17,13 @@ type Produk struct {
 }
 
 // in-memory storage
-var produk = []Produk{
+var produk = []Product{
 	{ID: 1, Nama: "Indomie", Harga: 7000, Stok: 10},
 	{ID: 2, Nama: "Vit 100ml", Harga: 1000, Stok: 20},
 	{ID: 3, Nama: "Kecap", Harga: 3000, Stok: 20},
 }
 
-func getProdukById(w http.ResponseWriter, r *http.Request) {
+func getProductById(w http.ResponseWriter, r *http.Request) {
 	// parse id dari url
 	// url: /api/produk/{id}
 
@@ -37,7 +37,7 @@ func getProdukById(w http.ResponseWriter, r *http.Request) {
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/produk/")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid Produk ID", http.StatusBadRequest)
+		http.Error(w, "Invalid Product ID", http.StatusBadRequest)
 	}
 
 	// cari produk dengan id yang sesuai
@@ -50,23 +50,23 @@ func getProdukById(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// jika produk tidak ditemukan
-	json.NewEncoder(w).Encode(map[string]string{"status": "error", "message": "Produk not found"})
+	json.NewEncoder(w).Encode(map[string]string{"status": "error", "message": "Product not found"})
 }
 
-func updateProduk(w http.ResponseWriter, r *http.Request) {
+func updateProduct(w http.ResponseWriter, r *http.Request) {
 	// get id dari request
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/produk/")
 
 	// convert id to integer
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid Produk ID", http.StatusBadRequest)
+		http.Error(w, "Invalid Product ID", http.StatusBadRequest)
 		return
 	}
 
 	// get data dari request
-	var updateProduk Produk
-	err = json.NewDecoder(r.Body).Decode(&updateProduk)
+	var updateProduct Product
+	err = json.NewDecoder(r.Body).Decode(&updateProduct)
 	if err != nil {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
 	}
@@ -74,27 +74,27 @@ func updateProduk(w http.ResponseWriter, r *http.Request) {
 	// loop produk, cari id yang sesuai, ganti data sesuai dengan data dari request
 	for i := range produk {
 		if produk[i].ID == id {
-			updateProduk.ID = id
-			produk[i] = updateProduk
+			updateProduct.ID = id
+			produk[i] = updateProduct
 
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(updateProduk)
+			json.NewEncoder(w).Encode(updateProduct)
 			return
 		}
 	}
 
 	// jika produk tidak ditemukan
-	json.NewEncoder(w).Encode(map[string]string{"status": "error", "message": "Produk not found"})
+	json.NewEncoder(w).Encode(map[string]string{"status": "error", "message": "Product not found"})
 }
 
-func deleteProduk(w http.ResponseWriter, r *http.Request) {
+func deleteProduct(w http.ResponseWriter, r *http.Request) {
 	// get id
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/produk/")
 
 	// ganti id int
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid Produk ID", http.StatusBadRequest)
+		http.Error(w, "Invalid Product ID", http.StatusBadRequest)
 		return
 	}
 
@@ -112,7 +112,7 @@ func deleteProduk(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"status": "error", "message": "Produk not found"})
+	json.NewEncoder(w).Encode(map[string]string{"status": "error", "message": "Product not found"})
 }
 
 func main() {
@@ -131,7 +131,7 @@ func main() {
 			json.NewEncoder(w).Encode(produk)
 		case "POST":
 			// baca data dari request
-			var produkBaru Produk
+			var produkBaru Product
 			err := json.NewDecoder(r.Body).Decode(&produkBaru)
 			if err != nil {
 				http.Error(w, "Invalid request", http.StatusBadRequest)
@@ -154,11 +154,11 @@ func main() {
 	http.HandleFunc("/api/produk/{id}", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "GET":
-			getProdukById(w, r)
+			getProductById(w, r)
 		case "PUT":
-			updateProduk(w, r)
+			updateProduct(w, r)
 		case "DELETE":
-			deleteProduk(w, r)
+			deleteProduct(w, r)
 		}
 	})
 
