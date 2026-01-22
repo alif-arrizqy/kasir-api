@@ -330,40 +330,19 @@ func deleteCategory(w http.ResponseWriter, r *http.Request) {
 func main() {
 	// health check endpoint
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{"status": "ok", "message": "API is running"})
+		successResponse(w, "API is running", nil, http.StatusOK)
 	})
 
-	// GET localhost:8889/api/produk
-	// POST localhost:8889/api/produk
-	http.HandleFunc("/api/produk", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/api/products", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "GET":
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(produk)
+			getAllProducts(w, r)
 		case "POST":
-			// baca data dari request
-			var produkBaru Product
-			err := json.NewDecoder(r.Body).Decode(&produkBaru)
-			if err != nil {
-				http.Error(w, "Invalid request", http.StatusBadRequest)
-				return
-			}
-
-			// masukin data ke dalam array produk
-			produkBaru.ID = len(produk) + 1
-			produk = append(produk, produkBaru)
-
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusCreated) // 201
-			json.NewEncoder(w).Encode(produkBaru)
+			createProduct(w, r)
 		}
 	})
 
-	// GET localhost:8889/api/produk/{id}
-	// PUT localhost:8889/api/produk/{id}
-	// DELETE localhost:8889/api/produk/{id}
-	http.HandleFunc("/api/produk/{id}", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/api/products/", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "GET":
 			getProductById(w, r)
@@ -371,6 +350,26 @@ func main() {
 			updateProduct(w, r)
 		case "DELETE":
 			deleteProduct(w, r)
+		}
+	})
+
+	http.HandleFunc("/api/categories", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case "GET":
+			getAllCategories(w, r)
+		case "POST":
+			createCategory(w, r)
+		}
+	})
+
+	http.HandleFunc("/api/categories/", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case "GET":
+			getCategoryById(w, r)
+		case "PUT":
+			updateCategory(w, r)
+		case "DELETE":
+			deleteCategory(w, r)
 		}
 	})
 
