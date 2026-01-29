@@ -7,7 +7,10 @@ import (
 	"kasir-api/services"
 	"kasir-api/utils"
 	"net/http"
+	"time"
 )
+
+var appStartTime = time.Now()
 
 // SetupRoutes mengatur semua route aplikasi termasuk dependency injection
 func SetupRoutes(db *sql.DB) {
@@ -17,7 +20,17 @@ func SetupRoutes(db *sql.DB) {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
-		utils.SuccessResponse(w, "API is running", nil, http.StatusOK)
+		// uptime
+		uptimeSeconds := time.Since(appStartTime).Seconds()
+		uptimeReadable := utils.FormatUptime(uptimeSeconds)
+		
+		data := map[string]interface{}{
+			"status":         "ok",
+			"timestamp":      time.Now().Format(time.RFC3339),
+			"uptime":         uptimeSeconds,
+			"uptimeReadable": uptimeReadable,
+		}
+		utils.SuccessResponse(w, "API is running", data, http.StatusOK)
 	})
 
 	// Dependency injection untuk Product routes
