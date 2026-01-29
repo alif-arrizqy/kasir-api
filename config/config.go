@@ -1,7 +1,7 @@
 package config
 
 type Config struct {
-	Host   string `mapstructure:"host"`
-	Port   string `mapstructure:"port"`
-	DBConn string `mapstructure:"db_conn"`
+	Host   string `mapstructure:"HOST"`
+	Port   string `mapstructure:"PORT"`
+	DBConn string `mapstructure:"DBConn"`
 }
