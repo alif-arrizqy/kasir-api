@@ -19,6 +19,11 @@ func ValidateProduct(p models.Product) (string, bool) {
 		return "Field 'stock' is required and must be greater than 0", false
 	}
 
+	// Validasi CategoriesID
+	if p.CategoriesID <= 0 {
+		return "Field 'categories_id' is required", false
+	}
+
 	// Semua validasi passed
 	return "", true
 }
