@@ -7,11 +7,12 @@ import (
 )
 
 type ProductRepository struct {
-	db *sql.DB
+	db           *sql.DB
+	categoryRepo *CategoryRepository
 }
 
-func NewProductRepository(db *sql.DB) *ProductRepository {
-	return &ProductRepository{db: db}
+func NewProductRepository(db *sql.DB, categoryRepo *CategoryRepository) *ProductRepository {
+	return &ProductRepository{db: db, categoryRepo: categoryRepo}
 }
 
 func (repo *ProductRepository) GetAll() ([]models.ProductResponse, error) {
