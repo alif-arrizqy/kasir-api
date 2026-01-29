@@ -14,25 +14,36 @@ func NewProductRepository(db *sql.DB) *ProductRepository {
 	return &ProductRepository{db: db}
 }
 
-func (repo *ProductRepository) GetAll() ([]models.Product, error) {
-	query := "SELECT id, name, price, stock FROM products"
+func (repo *ProductRepository) GetAll() ([]models.ProductResponse, error) {
+	// INNER JOIN: hanya product yang punya category valid (sesuai validasi Create/Update)
+	query := `SELECT p.id, p.name, p.price, p.stock, c.id, c.name, c.description
+	FROM products p
+	INNER JOIN categories c ON p.categories_id = c.id
+	ORDER BY p.id ASC`
+
 	rows, err := repo.db.Query(query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	products := make([]models.Product, 0)
+	productResponses := make([]models.ProductResponse, 0)
 	for rows.Next() {
 		var p models.Product
-		err := rows.Scan(&p.ID, &p.Name, &p.Price, &p.Stock)
+		var category models.Category
+		err := rows.Scan(&p.ID, &p.Name, &p.Price, &p.Stock, &category.ID, &category.Name, &category.Description)
 		if err != nil {
 			return nil, err
 		}
-		products = append(products, p)
+		productResponses = append(productResponses, models.ProductResponse{
+			ID:       p.ID,
+			Name:     p.Name,
+			Price:    p.Price,
+			Stock:    p.Stock,
+			Category: &category,
+		})
 	}
-
-	return products, nil
+	return productResponses, nil
 }
 
 func (repo *ProductRepository) Create(product *models.Product) error {
@@ -42,19 +53,29 @@ func (repo *ProductRepository) Create(product *models.Product) error {
 }
 
 // GetByID - ambil produk by ID
-func (repo *ProductRepository) GetByID(id int) (*models.Product, error) {
-	query := "SELECT id, name, price, stock FROM products WHERE id = $1"
+func (repo *ProductRepository) GetByID(id int) (*models.ProductResponse, error) {
+	// INNER JOIN: hanya product yang punya category valid (sesuai validasi Create/Update)
+	query := `SELECT p.id, p.name, p.price, p.stock, c.id, c.name, c.description
+	FROM products p
+	INNER JOIN categories c ON p.categories_id = c.id
+	WHERE p.id = $1`
 
 	var p models.Product
-	err := repo.db.QueryRow(query, id).Scan(&p.ID, &p.Name, &p.Price, &p.Stock)
+	var category models.Category
+	err := repo.db.QueryRow(query, id).Scan(&p.ID, &p.Name, &p.Price, &p.Stock, &category.ID, &category.Name, &category.Description)
 	if err == sql.ErrNoRows {
 		return nil, errors.New("Product not found")
 	}
 	if err != nil {
 		return nil, err
 	}
-
-	return &p, nil
+	return &models.ProductResponse{
+		ID:       p.ID,
+		Name:     p.Name,
+		Price:    p.Price,
+		Stock:    p.Stock,
+		Category: &category,
+	}, nil
 }
 
 func (repo *ProductRepository) Update(product *models.Product) error {
