@@ -23,7 +23,7 @@ func SetupRoutes(db *sql.DB) {
 		// uptime
 		uptimeSeconds := time.Since(appStartTime).Seconds()
 		uptimeReadable := utils.FormatUptime(uptimeSeconds)
-		
+
 		data := map[string]interface{}{
 			"status":         "ok",
 			"timestamp":      time.Now().Format(time.RFC3339),
@@ -33,15 +33,15 @@ func SetupRoutes(db *sql.DB) {
 		utils.SuccessResponse(w, "API is running", data, http.StatusOK)
 	})
 
-	// Dependency injection untuk Product routes
-	productRepo := repositories.NewProductRepository(db)
-	productService := services.NewProductService(productRepo)
-	productHandler := handlers.NewProductHandler(productService)
-	SetupProductRoutes(productHandler)
-
 	// Dependency injection untuk Category routes
 	categoryRepo := repositories.NewCategoryRepository(db)
 	categoryService := services.NewCategoryService(categoryRepo)
 	categoryHandler := handlers.NewCategoryHandler(categoryService)
 	SetupCategoryRoutes(categoryHandler)
+
+	// Dependency injection untuk Product routes
+	productRepo := repositories.NewProductRepository(db, categoryRepo)
+	productService := services.NewProductService(productRepo)
+	productHandler := handlers.NewProductHandler(productService)
+	SetupProductRoutes(productHandler)
 }
