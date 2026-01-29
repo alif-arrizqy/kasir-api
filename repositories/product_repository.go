@@ -48,9 +48,18 @@ func (repo *ProductRepository) GetAll() ([]models.ProductResponse, error) {
 }
 
 func (repo *ProductRepository) Create(product *models.Product) error {
-	query := "INSERT INTO products (name, price, stock) VALUES ($1, $2, $3) RETURNING id"
-	err := repo.db.QueryRow(query, product.Name, product.Price, product.Stock).Scan(&product.ID)
-	return err
+	// find category by CategoriesID
+	category, err := repo.categoryRepo.GetByID(product.CategoriesID)
+	if err != nil {
+		return err
+	}
+	if category == nil {
+		return errors.New("Category not found")
+	}
+
+	query := "INSERT INTO products (name, price, stock, categories_id) VALUES ($1, $2, $3, $4) RETURNING id"
+	errInsert := repo.db.QueryRow(query, product.Name, product.Price, product.Stock, product.CategoriesID).Scan(&product.ID)
+	return errInsert
 }
 
 // GetByID - ambil produk by ID
@@ -80,8 +89,17 @@ func (repo *ProductRepository) GetByID(id int) (*models.ProductResponse, error) 
 }
 
 func (repo *ProductRepository) Update(product *models.Product) error {
-	query := "UPDATE products SET name = $1, price = $2, stock = $3 WHERE id = $4"
-	result, err := repo.db.Exec(query, product.Name, product.Price, product.Stock, product.ID)
+	// find category by CategoriesID
+	category, err := repo.categoryRepo.GetByID(product.CategoriesID)
+	if err != nil {
+		return err
+	}
+	if category == nil {
+		return errors.New("Category not found")
+	}
+
+	query := "UPDATE products SET name = $1, price = $2, stock = $3, categories_id = $4 WHERE id = $5"
+	result, err := repo.db.Exec(query, product.Name, product.Price, product.Stock, product.CategoriesID, product.ID)
 	if err != nil {
 		return err
 	}
