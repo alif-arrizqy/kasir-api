@@ -43,18 +43,6 @@ func main() {
 		DBConn: dbConn,
 	}
 
-	// Validate config
-	if config.DBConn == "" {
-		log.Fatal("Database connection string (DBCONN/DBConn) is empty. Check your environment variables")
-	}
-	
-	// Debug: log host dari DBConn saja (tanpa password) untuk memastikan env terbaca
-	if idx := strings.Index(config.DBConn, "@"); idx != -1 {
-		log.Println("DB target:", config.DBConn[idx+1:])
-	} else {
-		log.Println("DBConn set (host tidak terdeteksi)")
-	}
-
 	// Setup database
 	db, err := database.InitDB(config.DBConn)
 	if err != nil {
