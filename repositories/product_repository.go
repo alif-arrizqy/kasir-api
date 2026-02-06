@@ -15,14 +15,20 @@ func NewProductRepository(db *sql.DB, categoryRepo *CategoryRepository) *Product
 	return &ProductRepository{db: db, categoryRepo: categoryRepo}
 }
 
-func (repo *ProductRepository) GetAll() ([]models.ProductResponse, error) {
+func (repo *ProductRepository) GetAll(name string) ([]models.ProductResponse, error) {
 	// INNER JOIN: hanya product yang punya category valid (sesuai validasi Create/Update)
 	query := `SELECT p.id, p.name, p.price, p.stock, c.id, c.name, c.description
 	FROM products p
 	INNER JOIN categories c ON p.categories_id = c.id
 	ORDER BY p.id ASC`
-
-	rows, err := repo.db.Query(query)
+	
+	args := []interface{}{}
+	if name != "" {
+		query += " WHERE p.name ILIKE $1"
+		args = append(args, "%"+name+"%")
+	}
+	
+	rows, err := repo.db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
