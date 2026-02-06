@@ -44,4 +44,17 @@ func SetupRoutes(db *sql.DB) {
 	productService := services.NewProductService(productRepo)
 	productHandler := handlers.NewProductHandler(productService)
 	SetupProductRoutes(productHandler)
+
+	// Dependency injection untuk Transaction routes
+	transactionRepo := repositories.NewTransactionRepository(db)
+	transactionService := services.NewTransactionService(transactionRepo)
+	transactionHandler := handlers.NewTransactionHandler(transactionService)
+	SetupTransactionRoutes(transactionHandler)
+
+	// Dependency injection untuk Report routes
+	reportRepo := repositories.NewReportRepository(db)
+	reportService := services.NewReportService(reportRepo)
+	reportHandler := handlers.NewReportHandler(reportService)
+	http.HandleFunc("/api/report/hari-ini", reportHandler.GetReportToday)
+	http.HandleFunc("/api/report", reportHandler.GetReportByDateRange)
 }
