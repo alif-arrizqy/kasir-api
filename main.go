@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"kasir-api/config"
 	"kasir-api/database"
+	"kasir-api/middlewares"
 	"kasir-api/routes"
 	"log"
 	"net/http"
@@ -22,6 +23,7 @@ func main() {
 	viper.BindEnv("HOST")
 	viper.BindEnv("PORT")
 	viper.BindEnv("DBCONN") // Railway expects all uppercase
+	viper.BindEnv("API_KEY")
 
 	if _, err := os.Stat(".env"); err == nil {
 		viper.SetConfigFile(".env")
@@ -37,10 +39,20 @@ func main() {
 		dbConn = os.Getenv("DBCONN") // Direct fallback
 	}
 
+	// load config with fallback to API_KEY (all uppercase)
+	apiKey := viper.GetString("API_KEY")
+	if apiKey == "" {
+		apiKey = os.Getenv("API_KEY") // Direct fallback
+	}
+	if apiKey == "" {
+		apiKey = viper.GetString("APIKey") // Try uppercase version
+	}
+
 	config := config.Config{
 		Host:   viper.GetString("HOST"),
 		Port:   viper.GetString("PORT"),
 		DBConn: dbConn,
+		APIKey: apiKey,
 	}
 
 	// Setup database
@@ -50,8 +62,11 @@ func main() {
 	}
 	defer db.Close()
 
+	// Middleware setup
+	apiKeyMiddleware := middlewares.APIKey(config.APIKey)
+	
 	// Setup routes (dependency injection dilakukan di dalam SetupRoutes)
-	routes.SetupRoutes(db)
+	routes.SetupRoutes(db, apiKeyMiddleware)
 
 	addr := config.Host + ":" + config.Port
 	fmt.Println("Server running di", addr)
