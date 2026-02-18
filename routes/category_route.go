@@ -2,14 +2,15 @@ package routes
 
 import (
 	"kasir-api/handlers"
+	"kasir-api/middlewares"
 	"net/http"
 )
 
 // SetupCategoryRoutes mengatur semua route untuk category
-func SetupCategoryRoutes(categoryHandler *handlers.CategoryHandler) {
+func SetupCategoryRoutes(categoryHandler *handlers.CategoryHandler, apiKeyMiddleware func(http.HandlerFunc) http.HandlerFunc) {
 	// GET /api/category - Get all categories
 	// POST /api/category - Create new category
-	http.HandleFunc("/api/category", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/api/category", middlewares.Logger(middlewares.CORS(apiKeyMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
 			categoryHandler.GetAll(w, r)
@@ -18,12 +19,12 @@ func SetupCategoryRoutes(categoryHandler *handlers.CategoryHandler) {
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
-	})
+	}))))
 
 	// GET /api/category/{id} - Get category by ID
 	// PUT /api/category/{id} - Update category
 	// DELETE /api/category/{id} - Delete category
-	http.HandleFunc("/api/category/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/api/category/", middlewares.Logger(middlewares.CORS(apiKeyMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
 			categoryHandler.GetByID(w, r)
@@ -34,5 +35,5 @@ func SetupCategoryRoutes(categoryHandler *handlers.CategoryHandler) {
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
-	})
+	}))))
 }

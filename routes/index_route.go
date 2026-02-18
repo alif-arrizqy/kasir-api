@@ -3,6 +3,7 @@ package routes
 import (
 	"database/sql"
 	"kasir-api/handlers"
+	"kasir-api/middlewares"
 	"kasir-api/repositories"
 	"kasir-api/services"
 	"kasir-api/utils"
@@ -13,9 +14,9 @@ import (
 var appStartTime = time.Now()
 
 // SetupRoutes mengatur semua route aplikasi termasuk dependency injection
-func SetupRoutes(db *sql.DB) {
-	// Health check
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+func SetupRoutes(db *sql.DB, apiKeyMiddleware func(http.HandlerFunc) http.HandlerFunc) {
+	// Health check (no API key required, only CORS + Logger)
+	http.HandleFunc("/health", middlewares.Logger(middlewares.CORS(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
@@ -31,30 +32,30 @@ func SetupRoutes(db *sql.DB) {
 			"uptimeReadable": uptimeReadable,
 		}
 		utils.SuccessResponse(w, "API is running", data, http.StatusOK)
-	})
+	})))
 
 	// Dependency injection untuk Category routes
 	categoryRepo := repositories.NewCategoryRepository(db)
 	categoryService := services.NewCategoryService(categoryRepo)
 	categoryHandler := handlers.NewCategoryHandler(categoryService)
-	SetupCategoryRoutes(categoryHandler)
+	SetupCategoryRoutes(categoryHandler, apiKeyMiddleware)
 
 	// Dependency injection untuk Product routes
 	productRepo := repositories.NewProductRepository(db, categoryRepo)
 	productService := services.NewProductService(productRepo)
 	productHandler := handlers.NewProductHandler(productService)
-	SetupProductRoutes(productHandler)
+	SetupProductRoutes(productHandler, apiKeyMiddleware)
 
 	// Dependency injection untuk Transaction routes
 	transactionRepo := repositories.NewTransactionRepository(db)
 	transactionService := services.NewTransactionService(transactionRepo)
 	transactionHandler := handlers.NewTransactionHandler(transactionService)
-	SetupTransactionRoutes(transactionHandler)
+	SetupTransactionRoutes(transactionHandler, apiKeyMiddleware)
 
 	// Dependency injection untuk Report routes
 	reportRepo := repositories.NewReportRepository(db)
 	reportService := services.NewReportService(reportRepo)
 	reportHandler := handlers.NewReportHandler(reportService)
-	http.HandleFunc("/api/report/hari-ini", reportHandler.GetReportToday)
-	http.HandleFunc("/api/report", reportHandler.GetReportByDateRange)
+	http.HandleFunc("/api/report/hari-ini", middlewares.Logger(middlewares.CORS(apiKeyMiddleware(reportHandler.GetReportToday))))
+	http.HandleFunc("/api/report", middlewares.Logger(middlewares.CORS(apiKeyMiddleware(reportHandler.GetReportByDateRange))))
 }
